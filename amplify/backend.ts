@@ -20,7 +20,7 @@ const backend = defineBackend({
 const ALLOWED_ORIGINS = [
   'https://thecyclexapp.com',
   'https://www.thecyclexapp.com',
-  // 'https://main.xxxxxxxxxxxxx.amplifyapp.com', // <-- replace after first deploy
+  'https://main.d1m9dsh321wa9i.amplifyapp.com',
 ];
 
 const SITE_URL = 'https://thecyclexapp.com';
