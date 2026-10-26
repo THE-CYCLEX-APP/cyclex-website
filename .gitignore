@@ -1,0 +1,10 @@
+node_modules/
+.amplify/
+amplify_outputs*.json
+dist/
+*.csv
+.env
+.env.*
+.DS_Store
+npm-debug.log*
+*.DS_Store
