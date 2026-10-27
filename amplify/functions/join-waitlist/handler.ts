@@ -213,6 +213,14 @@ export const handler: Handler = async (event) => {
     const confirmToken = randomBytes(24).toString('hex');
     const now = new Date().toISOString();
 
+    // TEMPORARY: thecyclexapp.com isn't verified in SES yet (DNS access still
+    // pending), so SES sandbox mode would reject email to anyone who hasn't
+    // been individually verified. Until that's sorted, skip the confirmation
+    // email entirely and mark signups confirmed immediately. confirmToken is
+    // still generated/stored so re-enabling email confirmation later (see
+    // SKIP_EMAIL_CONFIRMATION) needs no schema change.
+    const SKIP_EMAIL_CONFIRMATION = true;
+
     await ddb.send(
       new PutCommand({
         TableName: TABLE,
@@ -221,31 +229,33 @@ export const handler: Handler = async (event) => {
           language,
           createdAt: now,
           consentAt: now,
-          status: 'pending',
+          status: SKIP_EMAIL_CONFIRMATION ? 'confirmed' : 'pending',
           confirmToken,
-          confirmedAt: null,
+          confirmedAt: SKIP_EMAIL_CONFIRMATION ? now : null,
           source: typeof payload.source === 'string' ? payload.source : 'landing-page',
         },
         ConditionExpression: 'attribute_not_exists(email)',
       }),
     );
 
-    const link = `${CONFIRM_BASE_URL}?token=${confirmToken}`;
-    const copy = COPY[language];
+    if (!SKIP_EMAIL_CONFIRMATION) {
+      const link = `${CONFIRM_BASE_URL}?token=${confirmToken}`;
+      const copy = COPY[language];
 
-    await ses.send(
-      new SendEmailCommand({
-        Source: FROM,
-        Destination: { ToAddresses: [email] },
-        Message: {
-          Subject: { Data: copy.subject, Charset: 'UTF-8' },
-          Body: {
-            Html: { Data: copy.html(link), Charset: 'UTF-8' },
-            Text: { Data: copy.text(link), Charset: 'UTF-8' },
+      await ses.send(
+        new SendEmailCommand({
+          Source: FROM,
+          Destination: { ToAddresses: [email] },
+          Message: {
+            Subject: { Data: copy.subject, Charset: 'UTF-8' },
+            Body: {
+              Html: { Data: copy.html(link), Charset: 'UTF-8' },
+              Text: { Data: copy.text(link), Charset: 'UTF-8' },
+            },
           },
-        },
-      }),
-    );
+        }),
+      );
+    }
 
     return json(200, { ok: true });
   } catch (err) {
