@@ -1,7 +1,7 @@
 import { defineBackend } from '@aws-amplify/backend';
 import { Duration, RemovalPolicy, Stack } from 'aws-cdk-lib';
 import { AttributeType, BillingMode, ProjectionType, Table } from 'aws-cdk-lib/aws-dynamodb';
-import { PolicyStatement } from 'aws-cdk-lib/aws-iam';
+import { AnyPrincipal, PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { FunctionUrlAuthType, HttpMethod } from 'aws-cdk-lib/aws-lambda';
 import { joinWaitlist } from './functions/join-waitlist/resource';
 import { confirmWaitlist } from './functions/confirm-waitlist/resource';
@@ -99,6 +99,13 @@ const confirmUrl = confirmFn.addFunctionUrl({
     allowedMethods: [HttpMethod.GET],
   },
 });
+// authType NONE alone doesn't make a Function URL publicly callable — it
+// still needs an explicit resource policy allowing anonymous invocation.
+confirmFn.addPermission('ConfirmUrlPublicAccess', {
+  principal: new AnyPrincipal(),
+  action: 'lambda:InvokeFunctionUrl',
+  functionUrlAuthType: FunctionUrlAuthType.NONE,
+});
 
 const joinUrl = joinFn.addFunctionUrl({
   authType: FunctionUrlAuthType.NONE,
@@ -108,6 +115,11 @@ const joinUrl = joinFn.addFunctionUrl({
     allowedHeaders: ['content-type'],
     maxAge: Duration.minutes(5),
   },
+});
+joinFn.addPermission('JoinUrlPublicAccess', {
+  principal: new AnyPrincipal(),
+  action: 'lambda:InvokeFunctionUrl',
+  functionUrlAuthType: FunctionUrlAuthType.NONE,
 });
 
 // ---------------------------------------------------------------------------
