@@ -24,7 +24,12 @@ const ALLOWED_ORIGINS = [
 ];
 
 const SITE_URL = 'https://thecyclexapp.com';
-const SES_FROM_ADDRESS = 'hello@thecyclexapp.com';
+
+// TEMPORARY: thecyclexapp.com isn't verified in SES yet (pending DNS access),
+// so we send as this already-verified personal address to test end-to-end.
+// Switch back to 'hello@thecyclexapp.com' once the domain identity is
+// verified — the IAM policy below already allows both.
+const SES_FROM_ADDRESS = 'marina.fdlr.ux@hotmail.com';
 
 const waitlistStack = backend.createStack('CyclexWaitlistStack');
 
@@ -72,11 +77,15 @@ waitlistTable.grant(confirmFn, 'dynamodb:Query', 'dynamodb:UpdateItem');
 const region = Stack.of(waitlistStack).region;
 const account = Stack.of(waitlistStack).account;
 
-// SES: only allowed to send from the one verified identity, nothing else.
+// SES: only allowed to send from these verified identities, nothing else.
+// (The personal address is temporary, for testing — see SES_FROM_ADDRESS above.)
 joinFn.addToRolePolicy(
   new PolicyStatement({
     actions: ['ses:SendEmail', 'ses:SendRawEmail'],
-    resources: [`arn:aws:ses:${region}:${account}:identity/thecyclexapp.com`],
+    resources: [
+      `arn:aws:ses:${region}:${account}:identity/thecyclexapp.com`,
+      `arn:aws:ses:${region}:${account}:identity/marina.fdlr.ux@hotmail.com`,
+    ],
   }),
 );
 
