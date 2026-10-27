@@ -73,6 +73,7 @@ section{padding:72px 22px 0;text-align:center}
 .wait{display:flex;align-items:center;gap:6px;padding:6px;margin:22px auto 0;max-width:420px;border-radius:999px;background:rgba(240,239,232,.06);border:1px solid var(--line);transition:border-color .2s}
 .wait:focus-within{border-color:var(--pink)}
 .wait input{flex:1;min-width:0;height:48px;padding:0 14px;border:0;background:transparent;color:var(--fg);font:16px 'Space Grotesk',sans-serif;outline:none}
+.wait input:-webkit-autofill,.wait input:-webkit-autofill:hover,.wait input:-webkit-autofill:focus,.wait input:autofill{-webkit-text-fill-color:var(--fg);caret-color:var(--fg);-webkit-box-shadow:0 0 0 1000px #15161a inset;box-shadow:0 0 0 1000px #15161a inset;transition:background-color 9999s ease-in-out 0s}
 .wait input::placeholder{color:rgba(240,239,232,.42)}
 .btn{flex-shrink:0;height:48px;padding:0 18px 0 20px;border:0;border-radius:999px;background:var(--pink);color:#07080a;font:600 14px 'Space Grotesk',sans-serif;display:inline-flex;align-items:center;gap:6px;cursor:pointer;transition:transform .15s,opacity .2s}
 .btn:hover{opacity:.9}.btn:active{transform:scale(.97)}
