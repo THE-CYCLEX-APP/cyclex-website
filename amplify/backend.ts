@@ -5,10 +5,12 @@ import { AnyPrincipal, PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { FunctionUrlAuthType, HttpMethod } from 'aws-cdk-lib/aws-lambda';
 import { joinWaitlist } from './functions/join-waitlist/resource';
 import { confirmWaitlist } from './functions/confirm-waitlist/resource';
+import { sendWelcomeBatch } from './functions/send-welcome-batch/resource';
 
 const backend = defineBackend({
   joinWaitlist,
   confirmWaitlist,
+  sendWelcomeBatch,
 });
 
 // ---------------------------------------------------------------------------
@@ -69,25 +71,27 @@ const rateLimitTable = new Table(waitlistStack, 'WaitlistRateLimitTable', {
 // ---------------------------------------------------------------------------
 const joinFn = backend.joinWaitlist.resources.lambda;
 const confirmFn = backend.confirmWaitlist.resources.lambda;
+const sendWelcomeBatchFn = backend.sendWelcomeBatch.resources.lambda;
 
 waitlistTable.grant(joinFn, 'dynamodb:GetItem', 'dynamodb:PutItem');
 rateLimitTable.grant(joinFn, 'dynamodb:UpdateItem');
 waitlistTable.grant(confirmFn, 'dynamodb:Query', 'dynamodb:UpdateItem');
+waitlistTable.grant(sendWelcomeBatchFn, 'dynamodb:Scan', 'dynamodb:UpdateItem');
 
 const region = Stack.of(waitlistStack).region;
 const account = Stack.of(waitlistStack).account;
 
 // SES: only allowed to send from these verified identities, nothing else.
 // (The personal address is temporary, for testing — see SES_FROM_ADDRESS above.)
-joinFn.addToRolePolicy(
-  new PolicyStatement({
-    actions: ['ses:SendEmail', 'ses:SendRawEmail'],
-    resources: [
-      `arn:aws:ses:${region}:${account}:identity/thecyclexapp.com`,
-      `arn:aws:ses:${region}:${account}:identity/marina.fdlr.ux@hotmail.com`,
-    ],
-  }),
-);
+const sesSendPolicy = new PolicyStatement({
+  actions: ['ses:SendEmail', 'ses:SendRawEmail'],
+  resources: [
+    `arn:aws:ses:${region}:${account}:identity/thecyclexapp.com`,
+    `arn:aws:ses:${region}:${account}:identity/marina.fdlr.ux@hotmail.com`,
+  ],
+});
+joinFn.addToRolePolicy(sesSendPolicy);
+sendWelcomeBatchFn.addToRolePolicy(sesSendPolicy);
 
 // ---------------------------------------------------------------------------
 // Function URLs (public HTTP endpoints), CORS locked to our own domain(s).
@@ -132,6 +136,9 @@ backend.joinWaitlist.addEnvironment('CONFIRM_BASE_URL', confirmUrl.url);
 
 backend.confirmWaitlist.addEnvironment('WAITLIST_TABLE_NAME', waitlistTable.tableName);
 backend.confirmWaitlist.addEnvironment('SITE_URL', SITE_URL);
+
+backend.sendWelcomeBatch.addEnvironment('WAITLIST_TABLE_NAME', waitlistTable.tableName);
+backend.sendWelcomeBatch.addEnvironment('SES_FROM_ADDRESS', SES_FROM_ADDRESS);
 
 backend.addOutput({
   custom: {
