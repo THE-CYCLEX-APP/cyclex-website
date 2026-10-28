@@ -14,10 +14,41 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// Run this from the Lambda console's "Test" button (any event, e.g. {}).
-// It emails everyone with status "confirmed" who hasn't gotten the welcome
-// email yet, so it's safe to re-run: already-sent people are skipped.
-export const handler: Handler = async () => {
+// Run this from the Lambda console's "Test" button.
+//
+//  - Test event {} (or any event without "testEmail"): emails EVERYONE with
+//    status "confirmed" who hasn't gotten the welcome email yet, and marks
+//    them sent — safe to re-run, already-sent people are skipped.
+//
+//  - Test event {"testEmail": "you@example.com", "testLang": "en"}: sends
+//    just that one address a copy, without touching the database at all
+//    (doesn't mark anyone sent, doesn't affect the real batch later). Use
+//    this to preview the real email in your own inbox first.
+export const handler: Handler = async (event) => {
+  const testEmail = typeof event?.testEmail === 'string' ? event.testEmail.trim().toLowerCase() : null;
+
+  if (testEmail) {
+    const lang = isLang(event?.testLang) ? event.testLang : 'en';
+    await ses.send(
+      new SendEmailCommand({
+        Source: FROM,
+        Destination: { ToAddresses: [testEmail] },
+        Message: {
+          Subject: { Data: `[TEST] ${welcomeEmailSubject(lang)}`, Charset: 'UTF-8' },
+          Body: {
+            Html: { Data: renderWelcomeEmailHtml(lang), Charset: 'UTF-8' },
+            Text: { Data: renderWelcomeEmailText(lang), Charset: 'UTF-8' },
+          },
+        },
+      }),
+    );
+    return { ok: true, sentTestTo: testEmail, lang };
+  }
+
+  return runFullBatch();
+};
+
+async function runFullBatch() {
   let sent = 0;
   let failed = 0;
   const failedEmails: string[] = [];
