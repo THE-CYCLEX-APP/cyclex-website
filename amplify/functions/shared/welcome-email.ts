@@ -25,7 +25,7 @@ interface WelcomeCopy {
 
 const COPY: Record<Lang, WelcomeCopy> = {
   en: {
-    subject: 'Welcome to CYCLEX 💛',
+    subject: 'Welcome to CYCLEX 🩷',
     preheader: "You're in. Here's what happens next.",
     greeting: 'Hi there, 👋',
     p1: 'Thank you for joining the CYCLEX waitlist.',
@@ -42,7 +42,7 @@ const COPY: Record<Lang, WelcomeCopy> = {
     footerOptOut: "If you'd rather not hear from us, just reply and let us know.",
   },
   de: {
-    subject: 'Willkommen bei CYCLEX 💛',
+    subject: 'Willkommen bei CYCLEX 🩷',
     preheader: 'Du bist dabei. So geht es weiter.',
     greeting: 'Hallo, 👋',
     p1: 'Danke, dass du dich für die CYCLEX-Warteliste angemeldet hast.',
@@ -59,7 +59,7 @@ const COPY: Record<Lang, WelcomeCopy> = {
     footerOptOut: 'Wenn du lieber nichts mehr von uns hören möchtest, antworte einfach auf diese E-Mail.',
   },
   es: {
-    subject: 'Bienvenida a CYCLEX 💛',
+    subject: 'Bienvenida a CYCLEX 🩷',
     preheader: 'Ya estás dentro. Esto es lo que viene ahora.',
     greeting: '¡Hola! 👋',
     p1: 'Gracias por unirte a la lista de espera de CYCLEX.',
